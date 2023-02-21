@@ -40,8 +40,7 @@ class MinimalSubscriber(Node):
         if self.published:
             self.vit_x = 0.9 * self.vit_x + 0.1 * msg.axes[1]
             if msg.axes[1] != 0:
-                self.rot_z = 0.9 * self.rot_z +\
-                  0.1 * msg.axes[0] * np.sign(msg.axes[1])
+                self.rot_z = 0.9 * self.rot_z + 0.1 * msg.axes[0] * np.sign(msg.axes[1])
             else:
                 self.rot_z = 0.9 * self.rot_z + 0.1 * msg.axes[0]
             self.published = False
