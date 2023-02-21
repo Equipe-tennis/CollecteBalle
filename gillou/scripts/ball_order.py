@@ -1,37 +1,29 @@
 #!/usr/bin/env python3
-import cmath
+# import cmath
 
-import rclpy
 import numpy as np
+import rclpy
+from geometry_msgs.msg import Twist, Vector3
 from rclpy.node import Node
-from std_msgs.msg import Int16MultiArray, Float32
-from geometry_msgs.msg import Vector3, Twist
-
+from std_msgs.msg import Float32, Int16MultiArray
 
 
 class MinimalSubscriber(Node):
-
     def __init__(self):
-        super().__init__('minimal_subscriber')
+        super().__init__("minimal_subscriber")
         self.subscription = self.create_subscription(
-            Int16MultiArray(),
-            '/positions_balles',
-            self.listener_callback,
-            10)
+            Int16MultiArray(), "/positions_balles", self.listener_callback, 10
+        )
         self.subscription  # prevent unused variable warning
 
         self.subscription2 = self.create_subscription(
-            Vector3,
-            '/position_robot',
-            self.listener_pos_rob_callback,
-            10)
-        self.subscription2 # prevent unused variable warning
+            Vector3, "/position_robot", self.listener_pos_rob_callback, 10
+        )
+        self.subscription2  # prevent unused variable warning
 
         self.subscription3 = self.create_subscription(
-            Float32,
-            '/orientation_robot',
-            self.listener_orientation_callback,
-            10)
+            Float32, "/orientation_robot", self.listener_orientation_callback, 10
+        )
         self.subscription3  # prevent unused variable warning
 
         # self.subscription4 = self.create_subscription(
@@ -41,7 +33,7 @@ class MinimalSubscriber(Node):
         #     10)
         # self.subscription4  # prevent unused variable warning
 
-        self.publisher_ = self.create_publisher(Twist, '/demo/cmd_vel', 10)
+        self.publisher_ = self.create_publisher(Twist, "/demo/cmd_vel", 10)
         timer_period = 0.1  # seconds
         self.timer = self.create_timer(timer_period, self.timer_cmd_callback)
 
@@ -54,8 +46,8 @@ class MinimalSubscriber(Node):
         self.coords_net = [[-100, 0], [100, 0]]
         self.net_sides = [[[0, 0], [0, 0]], [[0, 0], [0, 0]]]
         self.lis_balls = []
-        print('coucou on est dans ball_order')
-        self.get_logger().info('Ball order publie')
+        print("coucou on est dans ball_order")
+        self.get_logger().info("Ball order publie")
 
     def timer_cmd_callback(self):
         msg = Twist()
@@ -87,34 +79,33 @@ class MinimalSubscriber(Node):
     # TODO control the orientation of the robot and put it into a straight line motion
 
     def angle(self, pos_1, pos_2):
-        vect = np.array([[pos_2[0]-pos_1[0]], [pos_2[1]-pos_1[1]]])
-        angle = np.arccos(vect[0, 0]/np.linalg.norm(vect))
-        if vect[1,0] > 0:
+        vect = np.array([[pos_2[0] - pos_1[0]], [pos_2[1] - pos_1[1]]])
+        angle = np.arccos(vect[0, 0] / np.linalg.norm(vect))
+        if vect[1, 0] > 0:
             angle = -angle
 
         return angle
 
     def straight_line(self, x_dest=100, y_dest=100):
-
         """
 
         Robot goes in a straight line to the desired position.
         input : coordinates of the robot and coordinates to go
         output : None, the robot goes to the desired position
         """
-        print('on est dans straight line')
+        print("on est dans straight line")
         x, y = self.position_robot
         angle_robot = self.orientation_robot
-        vect_theta = np.array([[x_dest - x], [y_dest - y]])
-        theta = self.angle((x,y), (x_dest, y_dest))
+        # vect_theta = np.array([[x_dest - x], [y_dest - y]])
+        theta = self.angle((x, y), (x_dest, y_dest))
 
-        err_angle =0.2  # rad
-        err_pos = 20 #pixel
-        self.get_logger().info('angle cherché: "%f"' % theta) 
-        self.get_logger().info('angle actu: "%f"' % angle_robot) 
+        err_angle = 0.2  # rad
+        err_pos = 20  # pixel
+        self.get_logger().info('angle cherché: "%f"' % theta)
+        self.get_logger().info('angle actu: "%f"' % angle_robot)
 
-        if (np.abs(theta - angle_robot) > err_angle):
-            #self.cmd_angular.z = 0.1
+        if np.abs(theta - angle_robot) > err_angle:
+            # self.cmd_angular.z = 0.1
             if np.sign(theta) == np.sign(angle_robot):
                 if theta > angle_robot:
                     self.cmd_angular.z = 0.1
@@ -126,15 +117,15 @@ class MinimalSubscriber(Node):
                 else:
                     self.cmd_angular.z = -0.1
         else:
-            self.cmd_angular.z = 0.
+            self.cmd_angular.z = 0.0
 
-            if (abs(x - x_dest)>=err_pos or abs(y - y_dest)>=err_pos):
+            if abs(x - x_dest) >= err_pos or abs(y - y_dest) >= err_pos:
                 self.cmd_linear.x = 0.3
             else:
                 self.cmd_linear.x = 0.1
 
-        if (abs(x - x_dest)>= err_pos or abs(y - y_dest)>= err_pos):
-            self.cmd_linear.x = 1.
+        if abs(x - x_dest) >= err_pos or abs(y - y_dest) >= err_pos:
+            self.cmd_linear.x = 1.0
 
     def min_distance(self, x, y, list_coords):
         """
@@ -145,7 +136,7 @@ class MinimalSubscriber(Node):
         """
         d = []
         for c in list_coords:
-            d.append([np.sqrt((c[0] - x)**2+(c[1] - y)**2), c])
+            d.append([np.sqrt((c[0] - x) ** 2 + (c[1] - y) ** 2), c])
 
         d.sort()
         return d[0][1][0], d[0][1][1]
@@ -159,20 +150,20 @@ class MinimalSubscriber(Node):
         return ball[2]
 
     def path_balls(self, lis_balls, ball_obj, x_robot, y_robot, radius):
-        # Careful ! lis_balls will be modified, therefore must not be the original one, 
+        # Careful ! lis_balls will be modified, therefore must not be the original one,
         # rather a copy
         """
 
-        Determines the path for a robot, given a destination ball, in order to grab as many 
+        Determines the path for a robot, given a destination ball, in order to grab as many
         balls as possible in the way.
 
         Args:
-            lis_balls (int[3][]): list of the balls that could be in the trajectory of the 
+            lis_balls (int[3][]): list of the balls that could be in the trajectory of the
             robot
             ball_obj (int[3]): the destination ball that will be reached eventually
             x_robot (int): x coordinate of the robot
             y_robot (int): y coordinate of the robot
-            radius (float): opening of the way. The bigger it is, the more likely the robot 
+            radius (float): opening of the way. The bigger it is, the more likely the robot
             is to find a ball to grab in the way.
 
         Returns:
@@ -180,19 +171,23 @@ class MinimalSubscriber(Node):
         """
         path = [(ball_obj[0], ball_obj[1])]
         for ball in lis_balls:
-            if self.ball_in_traj(ball, x_robot, y_robot, ball_obj[0], ball_obj[1], radius):
+            if self.ball_in_traj(
+                ball, x_robot, y_robot, ball_obj[0], ball_obj[1], radius
+            ):
                 lis_balls.remove(ball)
-                path = self.path_balls(lis_balls, ball, x_robot, y_robot, 0.75 * radius) + \
-                    self.path_balls(lis_balls, ball_obj,
-                                    ball[0], ball[1], 0.75 * radius)
+                path = self.path_balls(
+                    lis_balls, ball, x_robot, y_robot, 0.75 * radius
+                ) + self.path_balls(
+                    lis_balls, ball_obj, ball[0], ball[1], 0.75 * radius
+                )
                 break
         return path
 
-# TODO changer les fonctions pour mieux utiliser self
+    # TODO changer les fonctions pour mieux utiliser self
     def ball_in_traj(self, ball, x_robot, y_robot, x_dest, y_dest, radius):
         """
 
-        Checks wether a ball ball is within a rectangle formed by the segment between robot 
+        Checks wether a ball ball is within a rectangle formed by the segment between robot
         and dist and with a width 2 * radius.
 
         Args:
@@ -209,42 +204,64 @@ class MinimalSubscriber(Node):
         complex_vect = complex(x_dest - x_robot, y_dest - x_dest)
 
         angle = np.angle(complex_vect)[0]
-        corners = [(x_robot + radius * np.sin(angle), y_robot - radius * np.cos(angle)),
-                    (x_robot - radius * np.sin(angle), y_robot + radius * np.cos(angle)),
-                    (x_dest - radius * np.sin(angle), y_dest + radius * np.cos(angle)),
-                    (x_dest + radius * np.sin(angle), y_dest - radius * np.cos(angle))]  
-                    # 4 corners of the rectangle, turning clockwise
+        corners = [
+            (x_robot + radius * np.sin(angle), y_robot - radius * np.cos(angle)),
+            (x_robot - radius * np.sin(angle), y_robot + radius * np.cos(angle)),
+            (x_dest - radius * np.sin(angle), y_dest + radius * np.cos(angle)),
+            (x_dest + radius * np.sin(angle), y_dest - radius * np.cos(angle)),
+        ]
+        # 4 corners of the rectangle, turning clockwise
         bottom_right, bottom_left, top_left, top_right = corners
 
         coefs_first_vert_line = (0, 0)
-        coefs_first_vert_line[0] = (
-            bottom_left[1] - top_left[1]) / (bottom_left[0] - top_left[0])
-        coefs_first_vert_line[1] = bottom_left[1] - \
-            coefs_first_vert_line[0] * bottom_left[0]
+        coefs_first_vert_line[0] = (bottom_left[1] - top_left[1]) / (
+            bottom_left[0] - top_left[0]
+        )
+        coefs_first_vert_line[1] = (
+            bottom_left[1] - coefs_first_vert_line[0] * bottom_left[0]
+        )
         coefs_second_vert_line = (0, 0)
-        coefs_second_vert_line[0] = (
-            bottom_right[1] - top_right[1]) / (bottom_right[0] - top_right[0])
-        coefs_second_vert_line[1] = bottom_right[1] - \
-            coefs_first_vert_line[0] * bottom_right[0]
+        coefs_second_vert_line[0] = (bottom_right[1] - top_right[1]) / (
+            bottom_right[0] - top_right[0]
+        )
+        coefs_second_vert_line[1] = (
+            bottom_right[1] - coefs_first_vert_line[0] * bottom_right[0]
+        )
         coefs_first_horiz_line = (0, 0)
-        coefs_first_horiz_line[0] = (
-            bottom_left[1] - bottom_right[1]) / (bottom_left[0] - bottom_right[0])
-        coefs_first_horiz_line[1] = bottom_left[1] - \
-            coefs_first_horiz_line[0] * bottom_left[0]
+        coefs_first_horiz_line[0] = (bottom_left[1] - bottom_right[1]) / (
+            bottom_left[0] - bottom_right[0]
+        )
+        coefs_first_horiz_line[1] = (
+            bottom_left[1] - coefs_first_horiz_line[0] * bottom_left[0]
+        )
         coefs_second_horiz_line = (0, 0)
-        coefs_second_horiz_line[0] = (
-            top_right[1] - top_left[1]) / (top_right[0] - top_left[0])
-        coefs_second_horiz_line[1] = top_right[1] - \
-            coefs_first_horiz_line[0] * top_right[0]
+        coefs_second_horiz_line[0] = (top_right[1] - top_left[1]) / (
+            top_right[0] - top_left[0]
+        )
+        coefs_second_horiz_line[1] = (
+            top_right[1] - coefs_first_horiz_line[0] * top_right[0]
+        )
 
-        if (ball[1] > coefs_first_vert_line[0] * ball[0] + coefs_first_vert_line[1] and
-            ball[1] < coefs_second_vert_line[0] * ball[0] + coefs_second_vert_line[1])\
-            or (ball[1] < coefs_first_vert_line[0] * ball[0] + coefs_first_vert_line[1] and
-            ball[1] > coefs_second_vert_line[0] * ball[0] + coefs_second_vert_line[1]):
-            if (ball[1] > coefs_first_horiz_line[0] * ball[0] + coefs_first_horiz_line[1] and
-                ball[1] < coefs_second_horiz_line[0] * ball[0] + coefs_second_horiz_line[1])\
-                or (ball[1] < coefs_first_horiz_line[0] * ball[0] + coefs_first_horiz_line[1] and
-                ball[1] > coefs_second_horiz_line[0] * ball[0] + coefs_second_horiz_line[1]):
+        if (
+            ball[1] > coefs_first_vert_line[0] * ball[0] + coefs_first_vert_line[1]
+            and ball[1]
+            < coefs_second_vert_line[0] * ball[0] + coefs_second_vert_line[1]
+        ) or (
+            ball[1] < coefs_first_vert_line[0] * ball[0] + coefs_first_vert_line[1]
+            and ball[1]
+            > coefs_second_vert_line[0] * ball[0] + coefs_second_vert_line[1]
+        ):
+            if (
+                ball[1]
+                > coefs_first_horiz_line[0] * ball[0] + coefs_first_horiz_line[1]
+                and ball[1]
+                < coefs_second_horiz_line[0] * ball[0] + coefs_second_horiz_line[1]
+            ) or (
+                ball[1]
+                < coefs_first_horiz_line[0] * ball[0] + coefs_first_horiz_line[1]
+                and ball[1]
+                > coefs_second_horiz_line[0] * ball[0] + coefs_second_horiz_line[1]
+            ):
                 return True
         return False
 
@@ -259,12 +276,11 @@ class MinimalSubscriber(Node):
         right = [self.net_sides[1][0][0], self.net_sides[1][1][0]]
 
         if min(left) <= coords[0] <= max(left):
-            return 'Left'
+            return "Left"
         elif min(right) <= coords[0] <= max(right):
-            return 'Right'
+            return "Right"
 
-
-    def ball_to_fetch(self, ball_list, radius, objective='zone'):
+    def ball_to_fetch(self, ball_list, radius, objective="zone"):
         """
 
         Input : list of balls with coordinates and time falling, a radius to search around,
@@ -276,24 +292,21 @@ class MinimalSubscriber(Node):
         x_robot, y_robot = self.position_robot  # fetch the robot coordinates
         x_dest, y_dest = 0, 0
 
-        if objective == 'zone':
+        if objective == "zone":
             x_dest, y_dest = self.min_distance(x_robot, y_robot, self.coords_zone)
-        elif objective == 'ball':
+        elif objective == "ball":
             ball_list.sort(key=self.oldest)
 
             x_dest, y_dest = ball_list[0][0], ball_list[0][1]
         else:
-            return print('Please enter a correct objective')
+            return print("Please enter a correct objective")
 
         ball_to_fetch = []
         for b in ball_list:
-            if (self.ball_in_traj(b, x_robot, y_robot, x_dest, y_dest, radius)):
+            if self.ball_in_traj(b, x_robot, y_robot, x_dest, y_dest, radius):
                 ball_to_fetch.append([b[0], b[1]])
 
         return ball_to_fetch
-
-
-
 
     def goto(self, x_robot, y_robot, x_dest, y_dest):
         """
@@ -301,12 +314,12 @@ class MinimalSubscriber(Node):
         Input : coordinates of the robot and coordinates to go.
         output : None, the robot goes to the desired position
         """
-        if (self.in_square([x_robot, y_robot]) == self.in_square([x_dest, y_dest])):
-            print('Robot is in the same side than the ball')
+        if self.in_square([x_robot, y_robot]) == self.in_square([x_dest, y_dest]):
+            print("Robot is in the same side than the ball")
             self.straight_line(x_robot, y_robot, x_dest, y_dest)
 
         else:
-            print('Robot need to change side')
+            print("Robot need to change side")
             x_mid, y_mid = self.min_distance(x_robot, y_robot, self.coords_net)
             self.straight_line(x_robot, y_robot, x_mid, y_mid)
             self.straight_line(x_mid, y_mid, x_dest, y_dest)
@@ -327,5 +340,5 @@ def main(args=None):
     rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

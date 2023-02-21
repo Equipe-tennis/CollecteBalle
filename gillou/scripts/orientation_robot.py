@@ -1,37 +1,31 @@
 #!/usr/bin/env python3
 
-import rclpy
 import cv2
 import numpy as np
+import rclpy
+from cv_bridge import CvBridge
+from geometry_msgs.msg import Vector3
 from rclpy.node import Node
 from sensor_msgs.msg import Image
 from std_msgs.msg import Float32
-from geometry_msgs.msg import Vector3
-from cv_bridge import CvBridge
 
 
 class MinimalSubscriber(Node):
-
     def __init__(self):
-        super().__init__('minimal_subscriber')
+        super().__init__("minimal_subscriber")
         self.subscription = self.create_subscription(
-            Image,
-            '/zenith_camera/image_raw',
-            self.listener_callback,
-            10)
+            Image, "/zenith_camera/image_raw", self.listener_callback, 10
+        )
         self.subscription  # prevent unused variable warning
         self.br = CvBridge()
         self.orientation_robot = 0.0
-        self.publisher_ = self.create_publisher(
-            Float32, 'orientation_robot', 10)
+        self.publisher_ = self.create_publisher(Float32, "orientation_robot", 10)
         timer_period = 0.1  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
         self.subscription2 = self.create_subscription(
-            Vector3,
-            '/position_robot',
-            self.listener_pos_rob_callback,
-            10)
+            Vector3, "/position_robot", self.listener_pos_rob_callback, 10
+        )
         self.subscription2
         self.position_robot = (0, 0)
 
@@ -49,7 +43,10 @@ class MinimalSubscriber(Node):
         try:
             current_frame = self.br.imgmsg_to_cv2(msg)
             scale = 0.3
-            dim = [int(current_frame.shape[1]*scale), int(current_frame.shape[0]*scale)]
+            dim = [
+                int(current_frame.shape[1] * scale),
+                int(current_frame.shape[0] * scale),
+            ]
             current_frame = cv2.resize(current_frame, dim, interpolation=cv2.INTER_AREA)
             current_frame = cv2.cvtColor(current_frame, cv2.COLOR_BGR2RGB)
             # filtre pour détecter la pelle
@@ -65,53 +62,56 @@ class MinimalSubscriber(Node):
                     if seg1[i, j] == 255:
                         pixel_blanc_x.append(i)
                         pixel_blanc_y.append(j)
-            pos_x_pelle = int((np.sum(pixel_blanc_x)/len(pixel_blanc_x))/scale)
-            pos_y_pelle = int((np.sum(pixel_blanc_y)/len(pixel_blanc_y))/scale)
+            pos_x_pelle = int((np.sum(pixel_blanc_x) / len(pixel_blanc_x)) / scale)
+            pos_y_pelle = int((np.sum(pixel_blanc_y) / len(pixel_blanc_y)) / scale)
             position_pelle = (pos_x_pelle, pos_y_pelle)
             # self.get_logger().info("On est avant angle")
             angle = self.angle(self.position_robot, position_pelle)
             # self.get_logger().info("On est après angle")
             self.orientation_robot = angle
+        # trunk-ignore(flake8/E722)
         except:
             pass
 
     def angle(self, pos_rob, pos_pelle):
-        vect = np.array([[pos_pelle[0]-pos_rob[0]], [pos_pelle[1]-pos_rob[1]]])
-        angle = np.arccos(vect[0, 0]/np.linalg.norm(vect))
-        if np.sign(vect[1,0]) >0:
-            if np.sign(vect[0,0]) <0:
-                angle = np.pi-angle
+        vect = np.array([[pos_pelle[0] - pos_rob[0]], [pos_pelle[1] - pos_rob[1]]])
+        angle = np.arccos(vect[0, 0] / np.linalg.norm(vect))
+        if np.sign(vect[1, 0]) > 0:
+            if np.sign(vect[0, 0]) < 0:
+                angle = np.pi - angle
         else:
-            if np.sign(vect[0,0])>0:
+            if np.sign(vect[0, 0]) > 0:
                 angle = -angle
             else:
-                angle = -np.pi+angle
-        if angle >= np.pi/2:
-            angle -= np.pi/2
+                angle = -np.pi + angle
+        if angle >= np.pi / 2:
+            angle -= np.pi / 2
         elif angle >= 0:
-            angle = -np.pi/2 + angle
-        elif angle < -np.pi/2:
-            angle += 3*np.pi/2
+            angle = -np.pi / 2 + angle
+        elif angle < -np.pi / 2:
+            angle += 3 * np.pi / 2
         else:
-            angle -= np.pi/2
+            angle -= np.pi / 2
         return angle
-    
-    #def angle(self, pos_1, pos_2):
+
+    # def angle(self, pos_1, pos_2):
     #    vect = np.array([[pos_2[0]-pos_1[0]], [pos_2[1]-pos_1[1]]])
     #    angle = np.arccos(vect[0, 0]/np.linalg.norm(vect))
     #    if vect[1,0] > 0:
     #        angle = -angle
+
+
 #
-    #    if angle >= np.pi/2:
-    #        angle -= np.pi/2
-    #    elif angle >= 0:
-    #        angle = -np.pi/2 + angle
-    #    elif angle < -np.pi/2:
-    #        angle += 3*np.pi/2
-    #    else:
-    #        angle -= np.pi/2
+#    if angle >= np.pi/2:
+#        angle -= np.pi/2
+#    elif angle >= 0:
+#        angle = -np.pi/2 + angle
+#    elif angle < -np.pi/2:
+#        angle += 3*np.pi/2
+#    else:
+#        angle -= np.pi/2
 #
-    #    return angle
+#    return angle
 
 
 def main(args=None):
@@ -128,5 +128,5 @@ def main(args=None):
     rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

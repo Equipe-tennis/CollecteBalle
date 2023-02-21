@@ -1,22 +1,24 @@
 #!/usr/bin/env python3
 
 import os
-import rclpy
 import random
+
+import rclpy
 import xacro
-from geometry_msgs.msg import Pose, Point, Twist, Vector3
-from rclpy.clock import Clock
+from ament_index_python import get_package_share_directory
+from gazebo_msgs.msg import ModelStates
+from gazebo_msgs.srv import DeleteEntity, SetEntityState, SpawnEntity
+from geometry_msgs.msg import Point, Pose, Twist, Vector3
+
+# from rclpy.clock import Clock
 from rclpy.duration import Duration
 from rclpy.node import Node
-from rclpy.qos import DurabilityPolicy, QoSProfile, HistoryPolicy, ReliabilityPolicy
-from gazebo_msgs.msg import ModelStates
-from gazebo_msgs.srv import SpawnEntity, DeleteEntity, SetEntityState
-from ament_index_python import get_package_share_directory
+from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPolicy
+
 from tennis_court.msg import BallManagerStats
 
 
 class BallManager(Node):
-
     DELETE_BALL_DURATION = Duration(seconds=5.0)
     SPAWN_BALL_DURATION = 10.0
     TOTAL_BALL_COUNT = 10
@@ -26,15 +28,20 @@ class BallManager(Node):
         self.score = 0
         self.ball_id = 0
         self.balls = dict()
-        self.ball_description_file = os.path.join(get_package_share_directory("tennis_court"), "urdf", "ball.urdf.xacro")
+        self.ball_description_file = os.path.join(
+            get_package_share_directory("tennis_court"), "urdf", "ball.urdf.xacro"
+        )
 
         # Ball manager stats publisher
         qos_profile = QoSProfile(
-            history=HistoryPolicy.KEEP_LAST, depth=1,
+            history=HistoryPolicy.KEEP_LAST,
+            depth=1,
             reliability=ReliabilityPolicy.BEST_EFFORT,
-            durability=DurabilityPolicy.TRANSIENT_LOCAL
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
         )
-        self.stats_pub = self.create_publisher(BallManagerStats, "/ball_manager_stats", qos_profile)
+        self.stats_pub = self.create_publisher(
+            BallManagerStats, "/ball_manager_stats", qos_profile
+        )
         self.publish_stats()
 
         # Spawn entity client
@@ -48,12 +55,18 @@ class BallManager(Node):
             self.get_logger().warn("Service '/delete_entity' not available, waiting...")
 
         # Set entity state client
-        self.set_entity_state_client = self.create_client(SetEntityState, "/set_entity_state")
+        self.set_entity_state_client = self.create_client(
+            SetEntityState, "/set_entity_state"
+        )
         while not self.set_entity_state_client.wait_for_service(timeout_sec=2.0):
-            self.get_logger().warn("Service '/set_entity_state' not available, waiting...")
+            self.get_logger().warn(
+                "Service '/set_entity_state' not available, waiting..."
+            )
 
         # Model states subscriber
-        self.model_states_sub = self.create_subscription(ModelStates, "/model_states", self.on_model_states, 10)
+        self.model_states_sub = self.create_subscription(
+            ModelStates, "/model_states", self.on_model_states, 10
+        )
 
         # Ball spawner timer
         self.timer = self.create_timer(5.0, self.spawn_ball)
@@ -61,14 +74,18 @@ class BallManager(Node):
         self.get_logger().info("Ball manager initialized")
 
     def publish_stats(self):
-        self.stats_pub.publish(BallManagerStats(
-            score=self.score,
-            current_ball_count=self.get_ball_count(),
-            total_ball_count=len(self.balls)
-        ))
+        self.stats_pub.publish(
+            BallManagerStats(
+                score=self.score,
+                current_ball_count=self.get_ball_count(),
+                total_ball_count=len(self.balls),
+            )
+        )
 
     def get_ball_count(self):
-        return len([ball for ball in self.balls.values() if ball.status == Ball.STATUS_SPAWNED])
+        return len(
+            [ball for ball in self.balls.values() if ball.status == Ball.STATUS_SPAWNED]
+        )
 
     def spawn_ball(self):
         self.timer.cancel()
@@ -80,16 +97,18 @@ class BallManager(Node):
         xacro_mappings = {
             "vel_x": str(ball.initial_velocity.linear.x),
             "vel_y": str(ball.initial_velocity.linear.y),
-            "vel_z": str(ball.initial_velocity.linear.z)
+            "vel_z": str(ball.initial_velocity.linear.z),
         }
-        urdf_description = xacro.process_file(self.ball_description_file, mappings=xacro_mappings).toxml()
+        urdf_description = xacro.process_file(
+            self.ball_description_file, mappings=xacro_mappings
+        ).toxml()
         with open("/tmp/test.urdf", "w") as s:
             s.write(urdf_description)
-        self.spawn_entity_client.call_async(SpawnEntity.Request(
-            name=ball.name,
-            xml=urdf_description,
-            initial_pose=ball.initial_pose
-        ))
+        self.spawn_entity_client.call_async(
+            SpawnEntity.Request(
+                name=ball.name, xml=urdf_description, initial_pose=ball.initial_pose
+            )
+        )
         self.get_logger().info(f"Ball {ball.id} spawned")
         ball.set_spawned(self.get_clock().now())
         self.publish_stats()
@@ -123,9 +142,7 @@ class BallManager(Node):
         :type ball_id: int
         """
         ball = self.balls[ball_id]
-        self.delete_entity_client.call_async(DeleteEntity.Request(
-            name=ball.name
-        ))
+        self.delete_entity_client.call_async(DeleteEntity.Request(name=ball.name))
         ball.set_destroyed(self.get_clock().now())
         self.score += self.compute_score(ball.get_lifespan())
         self.publish_stats()
@@ -139,8 +156,10 @@ class BallManager(Node):
         lifespan_sec = lifespan.nanoseconds * 1e-9
         global_score = int(10000.0 / now)
         ball_score = int(20000.0 / lifespan_sec)
-        self.get_logger().info(f"Took {round(now, 3)} seconds to collect ball with a lifespan of {round(lifespan_sec, 3)} seconds. " +
-                               f"Got global time score of {global_score} and ball score of {ball_score}")
+        self.get_logger().info(
+            f"Took {round(now, 3)} seconds to collect ball with a lifespan of {round(lifespan_sec, 3)} seconds. "
+            + f"Got global time score of {global_score} and ball score of {ball_score}"
+        )
         return global_score + ball_score
 
     @staticmethod
@@ -151,19 +170,34 @@ class BallManager(Node):
         region_size = Point(x=2.224250, y=2.631040, z=2.0)
         region_1_center = Point(x=-6.85, y=-13.65, z=1.0)
         region_2_center = Point(x=6.85, y=13.65, z=1.0)
-        if region_1_center.x - region_size.x / 2.0 <= point.x <= region_1_center.x + region_size.x / 2.0 and \
-            region_1_center.y - region_size.y / 2.0 <= point.y <= region_1_center.y + region_size.y / 2.0 and \
-            region_1_center.z - region_size.z / 2.0 <= point.z <= region_1_center.z + region_size.z / 2.0:
+        if (
+            region_1_center.x - region_size.x / 2.0
+            <= point.x
+            <= region_1_center.x + region_size.x / 2.0
+            and region_1_center.y - region_size.y / 2.0
+            <= point.y
+            <= region_1_center.y + region_size.y / 2.0
+            and region_1_center.z - region_size.z / 2.0
+            <= point.z
+            <= region_1_center.z + region_size.z / 2.0
+        ):
             return True
-        if region_2_center.x - region_size.x / 2.0 <= point.x <= region_2_center.x + region_size.x / 2.0 and \
-            region_2_center.y - region_size.y / 2.0 <= point.y <= region_2_center.y + region_size.y / 2.0 and \
-            region_2_center.z - region_size.z / 2.0 <= point.z <= region_2_center.z + region_size.z / 2.0:
+        if (
+            region_2_center.x - region_size.x / 2.0
+            <= point.x
+            <= region_2_center.x + region_size.x / 2.0
+            and region_2_center.y - region_size.y / 2.0
+            <= point.y
+            <= region_2_center.y + region_size.y / 2.0
+            and region_2_center.z - region_size.z / 2.0
+            <= point.z
+            <= region_2_center.z + region_size.z / 2.0
+        ):
             return True
         return False
 
 
 class Ball(object):
-
     STATUS_NONE = 0
     STATUS_SPAWNED = 1
     STATUS_DESTROYED = 2
@@ -210,7 +244,11 @@ class Ball(object):
             self.enter_region_time = timestamp
         if not self.in_region and self.enter_region_time is not None:
             self.enter_region_time = None
-        return timestamp - self.enter_region_time if self.enter_region_time is not None else Duration()
+        return (
+            timestamp - self.enter_region_time
+            if self.enter_region_time is not None
+            else Duration()
+        )
 
     @property
     def status(self):
@@ -229,8 +267,16 @@ class Ball(object):
         return Pose(position=Point(x=x, y=y, z=z))
 
     def _get_initial_velocity(self):
-        x = - random.random() * 5.0 - 2.0 if self.initial_pose.position.y < 0 else random.random() * 5.0 + 2.0
-        y = -18.0 + random.random() * 10.0 if self.initial_pose.position.y > 0 else 18.0 - random.random() * 10.0
+        x = (
+            -random.random() * 5.0 - 2.0
+            if self.initial_pose.position.y < 0
+            else random.random() * 5.0 + 2.0
+        )
+        y = (
+            -18.0 + random.random() * 10.0
+            if self.initial_pose.position.y > 0
+            else 18.0 - random.random() * 10.0
+        )
         z = 1.0 + random.random() * 5.0
         return Twist(linear=Vector3(x=x, y=y, z=z))
 

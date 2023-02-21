@@ -1,39 +1,40 @@
 [![tennis-court-foxy](https://github.com/nathan-teaching/CollecteBalle/actions/workflows/tennis_court-foxy.yaml/badge.svg)](https://github.com/nathan-teaching/CollecteBalle/actions/workflows/tennis_court-foxy.yaml)
+
 # Tennis Ball Collector
 
 Ceci est un template de dépôt Git pour le cours d'ingénierie système et modélisation robotique à l'ENSTA Bretagne en 2023.
-
 
 ## Lancer la simulation
 
 ### Dépendences
 
 ###### A compléter avec la/les dépendences.
+
 Utiliser ROS2 foxy
 
 Installer gazebo pour foxy
+
 ```bash
 sudo apt install ros-foxy-gazebo-ros-pkgs
 ```
-
-
 
 ### Démarrer la simulation
 
 ###### A compléter avec la/les commande(s) à lancer.
 
-Pensez à sourcer votre ROS2 
+Pensez à sourcer votre ROS2
 
 ```bash
 colcon build --packages-select gillou tennis_court
 ```
+
 ```bash
 source install/setup.bash
 ```
+
 ```bash
 ros2 launch gillou display.launch.py
 ```
-
 
 ## Groupe
 
@@ -41,12 +42,9 @@ ros2 launch gillou display.launch.py
 
 Gace Hugo, Langlard Hugo, Potin Hugo, Reubrecht Hugo, Wanctin Hugo
 
-
 ### Gestion de projet
 
 Lien vers le Taiga : https://tree.taiga.io/project/laurent_p-equipe-tennis/timeline
-
-
 
 ## Structure du dépôt
 
@@ -65,15 +63,16 @@ Le dossier 'gillou' est un package ROS contenant le robot. Lors du lancement de 
 ### Documents et liens utiles
 
 Le dossier `docs` contient tous les documents utiles au projet:
+
 - Des [instructions pour utiliser Git](docs/GitWorkflow_fork.md)
 - Un [Mémo pour ROS 2 et Gazebo](docs/Memo_ROS2.pdf)
 - Les [slides de la présentation Git](docs/GitPresentation.pdf)
 - Des [informations pour Github Actions](docs/GithubActions.md)
 - Des [informations sur les Normes et les Styles pour du code](docs/Linters.md)
 
-Pour controler des actionneurs : 
-- [Projet : ros2\_control](https://github.com/ros-controls)
+Pour controler des actionneurs :
 
+- [Projet : ros2_control](https://github.com/ros-controls)
 
 ### Rapports
 
@@ -81,19 +80,24 @@ Le dossier `reports` doit être rempli avec les rapports d'[objectifs](../report
 
 ## Caractéristiques du robot
 
--- Nom : Best Ball Catcher  
+-- Nom : Best Ball Catcher
 
---taille (en mm): 
-	corps 420x310x180 plaques épaisseur 6  
-	roues r 100 w 40  
-	pelle L 200  
+--taille (en mm):
 
--- masse totale entre 10kg et 15kg  
-	corps 1.9kg  
-	roues 200g par roue  
-	pelle 1.5kg  
+corps 420x310x180 plaques épaisseur 6
 
---matériaux :  
-	roues pneus dentelés  
-	corps bambou  
-	pelle bambou  
+roues r 100 w 40  
+ pelle L 200
+
+-- masse totale entre 10kg et 15kg
+
+corps 1.9kg
+
+roues 200g par roue  
+ pelle 1.5kg
+
+--matériaux :
+
+roues pneus dentelés  
+corps bambou  
+ pelle bambou

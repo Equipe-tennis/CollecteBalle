@@ -1,23 +1,20 @@
 #!/usr/bin/env python3
 
-import rclpy
 import numpy as np
+import rclpy
+from geometry_msgs.msg import Twist
 from rclpy.node import Node
 from sensor_msgs.msg import Joy
-from geometry_msgs.msg import Twist
 
 # ros2 launch teleop_twist_joy teleop-launch.py joy_config:='ps4'
 
 
 class MinimalSubscriber(Node):
-
     def __init__(self):
-        super().__init__('joy_subscriber')
+        super().__init__("joy_subscriber")
         self.subscription_joy = self.create_subscription(
-            Joy,
-            '/joy',
-            self.listener_joy_callback,
-            10)
+            Joy, "/joy", self.listener_joy_callback, 10
+        )
         self.subscription_joy  # prevent unused variable warning
         self.vit_x = 0
         self.rot_z = 0
@@ -25,7 +22,7 @@ class MinimalSubscriber(Node):
         #  10)
         # timer_period = 0.1  # seconds
         # self.timer = self.create_timer(timer_period, self.timer_callback)
-        self.publisher_joy = self.create_publisher(Twist, '/demo/cmd_vel', 10)
+        self.publisher_joy = self.create_publisher(Twist, "/demo/cmd_vel", 10)
         timer_period = 0.1  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
         self.published = True
@@ -66,5 +63,5 @@ def main(args=None):
     rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

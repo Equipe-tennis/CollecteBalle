@@ -9,21 +9,16 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 
 
-
-
 class MinimalSubscriber(Node):
-
     def __init__(self):
-        super().__init__('minimal_subscriber')
+        super().__init__("minimal_subscriber")
         self.subscription = self.create_subscription(
-            Image,
-            '/zenith_camera/image_raw',
-            self.listener_callback,
-            10)
+            Image, "/zenith_camera/image_raw", self.listener_callback, 10
+        )
         self.subscription  # prevent unused variable warning
         self.br = CvBridge()
         self.position_robot = (0, 0)
-        self.publisher_ = self.create_publisher(Vector3, 'position_robot', 10)
+        self.publisher_ = self.create_publisher(Vector3, "position_robot", 10)
         timer_period = 0.1  # seconds
         self.timer = self.create_timer(timer_period, self.timer_callback)
 
@@ -31,7 +26,7 @@ class MinimalSubscriber(Node):
         msg = Vector3()
         msg.x = float(self.position_robot[0])
         msg.y = float(self.position_robot[1])
-        msg.z = 0.
+        msg.z = 0.0
         self.publisher_.publish(msg)
 
     def listener_callback(self, msg):
@@ -52,11 +47,12 @@ class MinimalSubscriber(Node):
                     if seg0[i, j] == 255:
                         pixel_blanc_x.append(i)
                         pixel_blanc_y.append(j)
-            pos_x = int(np.sum(pixel_blanc_x)/len(pixel_blanc_x))
-            pos_y = int(np.sum(pixel_blanc_y)/len(pixel_blanc_y))
+            pos_x = int(np.sum(pixel_blanc_x) / len(pixel_blanc_x))
+            pos_y = int(np.sum(pixel_blanc_y) / len(pixel_blanc_y))
             self.position_robot = (pos_x, pos_y)
+        # trunk-ignore(flake8/E722)
         except:
-            self.get_logger().info('CRASH')
+            self.get_logger().info("CRASH")
             pass
 
 
@@ -74,5 +70,5 @@ def main(args=None):
     rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

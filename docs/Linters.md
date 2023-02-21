@@ -7,9 +7,9 @@ Afin de s'assurer que ces styles sont respectés, on peut avoir recours à des "
 
 ### Set-up du package
 
-Faire apparaître les dépendance dans *package.xml*
+Faire apparaître les dépendance dans _package.xml_
 
-[Liste des ament\_lint\_common]( https://index.ros.org/p/ament_lint_common/)
+[Liste des ament_lint_common](https://index.ros.org/p/ament_lint_common/)
 
 ```xml
 <test_depend>ament_lint_auto</test_depend>
@@ -22,7 +22,7 @@ Faire apparaître les dépendance dans *package.xml*
 
 ```
 
-Ajouter l'option de test dans *CMakelist.txt*
+Ajouter l'option de test dans _CMakelist.txt_
 
 ```cmake
 find_package(ament_cmake REQUIRED)
@@ -45,7 +45,7 @@ Compiler le package
 colcon build # --select-package
 ```
 
-Jouer les tests ([Documentation pour *colcon test*](https://colcon.readthedocs.io/en/released/reference/verb/test.html))
+Jouer les tests ([Documentation pour _colcon test_](https://colcon.readthedocs.io/en/released/reference/verb/test.html))
 
 ```bash
 colcon test
@@ -55,6 +55,7 @@ colcon test --help # ou lire la doc
 ```
 
 ### Différents linters
-- Voir la [liste de ament](https://github.com/ament/ament_lint) 
+
+- Voir la [liste de ament](https://github.com/ament/ament_lint)
 - Créer/ajouter un linter custom : [Tuto non testé](https://ubuntu.com/blog/how-to-add-a-linter-to-ros-2)
 - Exemple : [Google Style Guide](https://google.github.io/styleguide/), [flake8](https://flake8.pycqa.org/en/latest/)
